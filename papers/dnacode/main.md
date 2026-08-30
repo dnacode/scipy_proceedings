@@ -323,8 +323,8 @@ Per-stage wall-clock times for the CPU baseline (scikit-learn / umap-learn) and 
 
 Speedup is computed as CPU total / GPU total for overlapping scales (100k and 500k),
 covering ML stages only (PCA + UMAP + DBSCAN); including GPU data transfer yields
-34.2 times and 9.76 times respectively (using the mean CPU total across repeated runs, see below). 
-For 1M and 2M, CPU is infeasible; the GPU time alone demonstrates the absolute capability of the edge 
+34.2 times and 9.76 times respectively (using the mean CPU total across repeated runs, see below).
+For 1M and 2M, CPU is infeasible; the GPU time alone demonstrates the absolute capability of the edge
 hardware at those scales.
 
 To assess how much a single run's noise affects these figures, the CPU benchmark was
