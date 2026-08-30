@@ -24,7 +24,7 @@ when matrices exceed GPU VRAM.
 We investigate whether the NVIDIA Grace Blackwell architecture — specifically its 128 GB
 unified CPU-GPU memory space with no PCIe bus between processor and accelerator — can
 remove this bottleneck and bring enterprise-grade genomics computing to a single
-self-contained edge appliance (the DGX Spark). Our contribution is a transparent,
+self-contained edge appliance (the DGX Spark) [@nvidia_dgx_spark_product]. Our contribution is a transparent,
 "boots on the ground" benchmark: same algorithm, same data, same machine — CPU stack
 versus GPU stack — with honest reporting of setup friction and hardware behavior.
 
@@ -52,21 +52,25 @@ variant calling, and more recently to ML-based genomic analysis. RAPIDS cuML pro
 GPU-accelerated implementations of scikit-learn-compatible algorithms including PCA,
 UMAP, and DBSCAN [@rapids_cuml]. The key challenge for genomics is data transfer:
 moving large matrices from CPU RAM to discrete GPU VRAM via PCIe is a significant
-overhead, particularly when matrices do not fit in VRAM and must be batched.
+overhead, particularly when matrices do not fit in VRAM and must be batched. Existing
+GB10 developer guides focus on quantized LLM inference workloads [@arm_developer_dgx_spark];
+to our knowledge, no prior work benchmarks the platform for metagenomic read binning.
 
 ## Unified Memory Architectures
 
 NVIDIA Grace Blackwell (GB10) integrates ARM CPU cores and a Blackwell GPU die on a
-single package, connected by NVLink-C2C at 900 GB/s aggregate bandwidth — approximately
-7× that of PCIe 5.0 x16. More critically, the architecture exposes a single coherent
-address space: any pointer valid on the CPU is valid on the GPU without an explicit copy.
+single package, connected by NVLink-C2C at approximately 600 GB/s aggregate bandwidth
+[@nvidia_hotchips_2025; @servethehome_gb10] — roughly 5 times that of PCIe 5.0 x16. 
+The 128 GB LPDDR5X pool itself delivers ~273 GB/s of memory bandwidth [@nvidia_dgx_spark_hardware],
+which is the effective bottleneck for memory-bound kernels. More critically, the architecture exposes
+a single coherent address space: any pointer valid on the CPU is valid on the GPU without an explicit copy.
 This is architecturally distinct from CUDA Unified Memory on discrete GPUs, which still
 performs migration behind the scenes. On GB10, the 128 GB LPDDR5X pool is physically
 shared, eliminating migration entirely.
 
 ## Project Glow and RAPIDS Spark
 
-Project Glow [@leland2020glow] is an open-source library that bridges genomic data
+Project Glow [@glow2019] is an open-source library that bridges genomic data
 formats (VCF, BGEN) with Apache Spark DataFrames. The RAPIDS Accelerator for Apache
 Spark [@rapids_spark] transparently routes Spark SQL and DataFrame operations to GPU
 kernels with no code changes. Together they form a high-level Python stack accessible
@@ -80,7 +84,7 @@ to biologists without low-level GPU programming expertise.
 |---------------|-------------------------------------------------|
 | Device        | NVIDIA DGX Spark                                |
 | SoC           | Grace Blackwell GB10                            |
-| CPU           | NVIDIA Grace (72-core ARM Neoverse V2)          |
+| CPU           | NVIDIA Grace (20-core ARM)                       |
 | GPU           | NVIDIA Blackwell (GB10)                         |
 | Memory        | 128 GB LPDDR5X (unified CPU+GPU)                |
 | Interconnect  | NVLink-C2C (no PCIe between CPU and GPU)        |
@@ -95,7 +99,7 @@ to biologists without low-level GPU programming expertise.
 |---------------------|-----------------------------------|----------------|
 | Orchestration       | Dagster [@dagster] (pipeline asset lineage and run tracking) | 1.13.9 |
 | Distributed compute | Apache Spark / PySpark [@zaharia2016spark] | 3.5.0  |
-| Genomic data        | Project Glow (JAR) [@leland2020glow] | 2.0.0       |
+| Genomic data        | Project Glow (JAR) [@glow2019] | 2.0.0       |
 | GPU DataFrame       | RAPIDS cuDF [@rapids_cuml]        | 26.6.0         |
 | GPU ML              | RAPIDS cuML [@rapids_cuml]        | 26.6.0         |
 | CPU ML baseline     | scikit-learn [@sklearn1]          | 1.9.0          |
@@ -172,6 +176,7 @@ the 256 possible ACGT 4-mers. Ambiguous bases (N) are skipped. Each vector sums 
 and has empirically ~100 non-zero entries per 150 bp read. The feature matrix is written
 as a Parquet file for repeated benchmark loading without re-parsing.
 
+(cpu-baseline)=
 ## CPU Baseline
 
 The CPU pipeline runs entirely on the ARM CPU cores of the Grace Blackwell SoC
@@ -318,7 +323,7 @@ Per-stage wall-clock times for the CPU baseline (scikit-learn / umap-learn) and 
 
 Speedup is computed as CPU total / GPU total for overlapping scales (100k and 500k),
 covering ML stages only (PCA + UMAP + DBSCAN); including GPU data transfer yields
-39.2× and 9.87× respectively. For 1M and 2M, CPU is infeasible; the GPU time alone
+39.2 times and 9.87 times respectively. For 1M and 2M, CPU is infeasible; the GPU time alone
 demonstrates the absolute capability of the edge hardware at those scales.
 
 **Table 3. GPU speedup over CPU baseline.**
@@ -336,7 +341,7 @@ See @fig:speedup for the speedup curve.
 :label: fig:speedup
 :alt: Line plot of GPU speedup over CPU baseline at 100k and 500k reads, with annotations indicating CPU infeasibility at 1M and 2M reads.
 
-End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN). Speedup is highest at small scale (44.2 times at 100k reads) where UMAP dominates runtime and delivers a 75× stage speedup, then decreases at 500k (10.1×) as DBSCAN accounts for a growing share of GPU time. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
+End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN). Speedup is highest at small scale (44.2 times at 100k reads) where UMAP dominates runtime and delivers a 75 times stage speedup, then decreases at 500k (10.1×) as DBSCAN accounts for a growing share of GPU time. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
 ::::
 
 ## Clustering Quality
@@ -510,7 +515,7 @@ which we did not benchmark here due to time constraints. Future work will:
 We present the first published benchmarking study of the NVIDIA DGX Spark (Grace
 Blackwell GB10) for deep-sea metagenomic read binning. Our GPU-accelerated pipeline —
 with cuML ML kernels [@rapids_cuml] orchestrated via PySpark [@zaharia2016spark] and
-Project Glow [@leland2020glow] — achieves **10–44× end-to-end speedup** over a
+Project Glow [@glow2019] — achieves **10–44× end-to-end speedup** over a
 scikit-learn CPU baseline with minimal code changes, while successfully processing
 feature matrices up to **400 MB (2M reads × 50 PCA components)** within the 128 GB
 unified memory budget without out-of-memory failures. Critically, the GPU pipeline
