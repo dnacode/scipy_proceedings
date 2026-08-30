@@ -323,8 +323,8 @@ Per-stage wall-clock times for the CPU baseline (scikit-learn / umap-learn) and 
 
 Speedup is computed as CPU total / GPU total for overlapping scales (100k and 500k),
 covering ML stages only (PCA + UMAP + DBSCAN); including GPU data transfer yields
-34.2 times and 9.76 times respectively (using the mean CPU total across repeated runs, see below).
-For 1M and 2M, CPU is infeasible; the GPU time alone demonstrates the absolute capability of the edge
+34.2 times and 9.76 times respectively (using the mean CPU total across repeated runs, see below). 
+For 1M and 2M, CPU is infeasible; the GPU time alone demonstrates the absolute capability of the edge 
 hardware at those scales.
 
 To assess how much a single run's noise affects these figures, the CPU benchmark was
@@ -348,7 +348,7 @@ See @fig:speedup for the speedup curve.
 :label: fig:speedup
 :alt: Line plot with error bars of GPU speedup over CPU baseline at 100k and 500k reads, with a shaded 95% confidence interval and annotations indicating CPU infeasibility at 1M and 2M reads.
 
-End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN), with 95% CI error bars from 3 repeated CPU runs per scale. Speedup is highest at small scale (38.5 times at 100k reads, 95% CI 27.5–49.6 times) where UMAP dominates runtime and delivers a 75 times stage speedup, then decreases at 500k (9.99 times, 95% CI 9.82–10.16 times) as DBSCAN accounts for a growing share of GPU time. The wider 100k interval reflects CPU run-to-run variance at that scale, not GPU instability. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
+End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN), with 95% CI error bars from 3 repeated CPU runs per scale. Speedup is highest at small scale (38.5 times at 100k reads, 95% CI 27.5–49.6 times) where UMAP dominates runtime and delivers a 65 times stage speedup, then decreases at 500k (9.99 times, 95% CI 9.82–10.16 times) as DBSCAN accounts for a growing share of GPU time. The wider 100k interval reflects CPU run-to-run variance at that scale, not GPU instability. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
 ::::
 
 ## Clustering Quality
@@ -438,24 +438,24 @@ the changing composition of GPU runtime, summarized below:
 
 | Reads | End-to-end CPU | End-to-end GPU | Speedup | DBSCAN share of GPU time | DBSCAN GPU time |
 |---|---|---|---|---|---|
-| 100k | 51.2s (mean, n=3) | 1.33s | 38.5 times | 37% | 0.49s |
-| 500k | 224.0s (mean, n=3) | 22.4s | 9.99 times | 52% | 11.69s |
+| 100k | 49.0s on CPU (mean, n=3) | 1.33s | 38.5 times | 37% | 0.49s |
+| 500k | 203.8s (mean, n=3) | 22.4s | 9.99 times | 52% | 11.69s |
 | 1M | did not terminate | 99s | — | 59% | 58.15s |
 | 2M | did not terminate | 437s (7.3 min) | — | 64% | 280.49s |
 
 At 100k reads, UMAP dominates GPU runtime (0.75s of 1.33s total, 56%) and delivers a
-75-times stage speedup. As dataset scale grows, DBSCAN's share of GPU runtime increases
+65.4 times stage speedup. As dataset scale grows, DBSCAN's share of GPU runtime increases
 steadily, making it the binding constraint on end-to-end throughput at large scale.
 
 **UMAP benefits most from GPU acceleration at every scale.** At 100k, UMAP takes 56.4s
 on CPU versus 0.75s on GPU — a **75 times stage speedup**. At 500k, UMAP takes 203.8s vs
-10.6s — a **19.2 times stage speedup**. The decrease in UMAP speedup from 100k to 500k is
+10.6s — a **19 times stage speedup**. The decrease in UMAP speedup from 100k to 500k is
 substantial: the GPU's cuVS k-NN kernel achieves its largest relative advantage where
 the CPU `pynndescent` index dominates wall time absolutely.
 
 **DBSCAN is GPU-accelerated at all scales.** At 100k, cuML DBSCAN takes 0.49s versus
-sklearn's 2.22s — a **4.5 times GPU advantage**. At 500k the advantage narrows to
-**1.92 times** (11.69s GPU vs 22.46s CPU). The narrowing reflects cuML DBSCAN's less
+sklearn's 2.14s (mean, n=3) — a **4.3 times GPU advantage**. At 500k the advantage narrows to
+**1.92 times** (11.69s GPU vs 22.40s CPU, mean, n=3). The narrowing reflects cuML DBSCAN's less
 favourable scaling exponent relative to sklearn's BallTree at these matrix densities:
 GPU DBSCAN time grows roughly quadratically with n (0.49s → 11.69s → 58.15s → 280.49s
 for 100k → 500k → 1M → 2M), consistent with the expected O(n²) worst case.
@@ -533,7 +533,7 @@ which we did not benchmark here due to time constraints. Future work will:
 We present the first published benchmarking study of the NVIDIA DGX Spark (Grace
 Blackwell GB10) for deep-sea metagenomic read binning. Our GPU-accelerated pipeline —
 with cuML ML kernels [@rapids_cuml] orchestrated via PySpark [@zaharia2016spark] and
-Project Glow [@glow2019] — achieves **10–39× end-to-end speedup** over a
+Project Glow [@glow2019] — achieves **10–39 times end-to-end speedup** over a
 scikit-learn CPU baseline with minimal code changes, while successfully processing
 feature matrices up to **400 MB (2M reads × 50 PCA components)** within the 128 GB
 unified memory budget without out-of-memory failures. Critically, the GPU pipeline
