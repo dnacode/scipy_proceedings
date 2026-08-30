@@ -60,6 +60,9 @@ project:
         - kislyuk2009
         - campello2013
         - martin2017malaspina
+        - sklearn1
+        - dagster
+        - sra_toolkit
 
 exports:
   - id: pdf
