@@ -172,7 +172,6 @@ the 256 possible ACGT 4-mers. Ambiguous bases (N) are skipped. Each vector sums 
 and has empirically ~100 non-zero entries per 150 bp read. The feature matrix is written
 as a Parquet file for repeated benchmark loading without re-parsing.
 
-(cpu-baseline)=
 ## CPU Baseline
 
 The CPU pipeline runs entirely on the ARM CPU cores of the Grace Blackwell SoC
@@ -326,10 +325,10 @@ demonstrates the absolute capability of the edge hardware at those scales.
 
 | Scale | CPU Total (s)  | GPU Total (s) | Speedup              |
 |-------|----------------|---------------|----------------------|
-| 100k  | 58.71          | 1.33          | **44.2×**            |
-| 500k  | 226.61         | 22.42         | **10.1×**            |
-| 1M    | ✗ infeasible   | 98.93         | ∞ (CPU cannot complete) |
-| 2M    | ✗ infeasible   | 436.97        | ∞ (CPU cannot complete) |
+| 100k  | 58.71          | 1.33          | **44.2 times**            |
+| 500k  | 226.61         | 22.42         | **10.1 times**            |
+| 1M    | ✗ infeasible   | 98.93         | $∞$ (CPU cannot complete) |
+| 2M    | ✗ infeasible   | 436.97        | $∞$ (CPU cannot complete) |
 
 See @fig:speedup for the speedup curve.
 
@@ -465,23 +464,23 @@ GPU-resident in all cases; only the Spark data-loading stage was affected.
 For deep-sea metagenomics, the economic case for edge computing rests on three pillars:
 
 **Data egress costs.** Raw FASTQ files from a single sequencing run can exceed 50 GB.
-Cloud providers charge $0.08–0.12 per GB of egress. Processing at the edge eliminates
+Cloud providers charge \$0.08–0.12 per GB of egress. Processing at the edge eliminates
 this repeated cost for iterative analysis.
 
-**CAPEX vs. OPEX.** The DGX Spark used in this study was acquired for $4,300 USD — a
+**CAPEX vs. OPEX.** The DGX Spark used in this study was acquired for \$4,300 USD — a
 one-time capital expenditure. Actual benchmark compute across all scales totaled
 approximately 15 minutes: ~6 minutes for CPU runs (100k–500k), ~3 minutes for GPU runs
 (100k–500k–1M), and ~6 minutes for the GPU 2M run. The full
 analysis session — including environment setup, JAR dependency resolution, pipeline
 development, and UMAP crash debugging — ran approximately 7–8 hours. On a mid-range
-cloud GPU instance (AWS g5.2xlarge, A10G 24 GB VRAM, $1.21/hr), that session costs
-approximately $10; on a memory-capable instance (AWS p4d.24xlarge, $32.77/hr) the same
-session costs approximately $260.
+cloud GPU instance (AWS g5.2xlarge, A10G 24 GB VRAM, \$1.21/hr), that session costs
+approximately \$10; on a memory-capable instance (AWS p4d.24xlarge, \$32.77/hr) the same
+session costs approximately \$260.
 
 The per-session cloud cost is low. The compounding factor is iteration frequency: a lab
 processing one sample batch per week runs approximately 50 analysis sessions per year.
-At that cadence, cloud OPEX ranges from $500–13,000/year depending on instance class,
-versus the DGX Spark's one-time $4,300 capital cost. Break-even against a mid-range
+At that cadence, cloud OPEX ranges from \$500–13,000/year depending on instance class,
+versus the DGX Spark's one-time \$4,300 capital cost. Break-even against a mid-range
 instance occurs in roughly 8–9 years on compute alone; against a memory-capable instance
 it occurs within months. The stronger argument for edge hardware, however, is iteration
 speed: the DGX Spark requires no spin-up latency, no data transfer to ephemeral storage,
