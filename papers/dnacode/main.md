@@ -1,7 +1,7 @@
 ---
 title: "Benchmarking Edge-Accelerated Genomics: A Pilot Study of Unified Memory Architectures in Deep-Sea Metagenomics"
 abstract: |
-  Deep-sea metagenomics involves sequencing total DNA from oceanic samples (water/sediment) to analyze microbial communities without laboratory cultivation. Large-scale deep-sea projects generate terabyte-scale datasets that often exceed the memory and bandwidth capacity of standard GPU clusters. This paper evaluates localized "edge" computing—the practice of processing data at or near the source of data generation to reduce latency and infrastructure overhead—for microbial read binning using the NVIDIA DGX Spark (Grace Blackwell GB10). We implement a GPU-accelerated pipeline utilizing PySpark 3.5, Project Glow, and RAPIDS (cuML), and benchmark it against a CPU-bound scikit-learn baseline using 4-mer frequency matrices derived from the Malaspina deep-ocean expedition dataset (NCBI BioProject PRJNA365132). Across dataset scales from 100k to 2M reads, the GPU pipeline achieves speedups of 10–44 times end-to-end at overlapping 100k–500k scales, and extends to 1M–2M reads where the CPU baseline fails, with minimal code changes. GPU acceleration is provided exclusively by cuML ML kernels; Spark data loading ran on CPU at all scales. We assess hardware viability, memory behavior under the 128 GB unified address space, and discuss the capital versus operating expenditure (CAPEX/OPEX) implications of edge computing for resource-constrained marine biology labs.
+  Deep-sea metagenomics involves sequencing total DNA from oceanic samples (water/sediment) to analyze microbial communities without laboratory cultivation. Large-scale deep-sea projects generate terabyte-scale datasets that often exceed the memory and bandwidth capacity of standard GPU clusters. This paper evaluates localized "edge" computing—the practice of processing data at or near the source of data generation to reduce latency and infrastructure overhead—for microbial read binning using the NVIDIA DGX Spark (Grace Blackwell GB10). We implement a GPU-accelerated pipeline utilizing PySpark 3.5, Project Glow, and RAPIDS (cuML), and benchmark it against a CPU-bound scikit-learn baseline using 4-mer frequency matrices derived from the Malaspina deep-ocean expedition dataset (NCBI BioProject PRJNA365132). Across dataset scales from 100k to 2M reads, the GPU pipeline achieves speedups of 10–39 times end-to-end at overlapping 100k–500k scales (95% CI across repeated runs), and extends to 1M–2M reads where the CPU baseline fails, with minimal code changes. GPU acceleration is provided exclusively by cuML ML kernels; Spark data loading ran on CPU at all scales. We assess hardware viability, memory behavior under the 128 GB unified address space, and discuss the capital versus operating expenditure (CAPEX/OPEX) implications of edge computing for resource-constrained marine biology labs.
 ---
 
 # Introduction
@@ -323,25 +323,32 @@ Per-stage wall-clock times for the CPU baseline (scikit-learn / umap-learn) and 
 
 Speedup is computed as CPU total / GPU total for overlapping scales (100k and 500k),
 covering ML stages only (PCA + UMAP + DBSCAN); including GPU data transfer yields
-39.2 times and 9.87 times respectively. For 1M and 2M, CPU is infeasible; the GPU time alone
-demonstrates the absolute capability of the edge hardware at those scales.
+34.2 times and 9.76 times respectively (using the mean CPU total across repeated runs, see below). 
+For 1M and 2M, CPU is infeasible; the GPU time alone demonstrates the absolute capability of the edge 
+hardware at those scales.
+
+To assess how much a single run's noise affects these figures, the CPU benchmark was
+repeated 3 times at each overlapping scale (100k, 500k); the GPU benchmark was run once at
+each scale post-warm-up-fix. The resulting 95% CI, propagated from the CPU-side
+standard error via the delta method (GPU contributes no variance here, n=1), is
+reported alongside the point estimate.
 
 **Table 3. GPU speedup over CPU baseline.**
 
-| Scale | CPU Total (s)  | GPU Total (s) | Speedup              |
-|-------|----------------|---------------|----------------------|
-| 100k  | 58.71          | 1.33          | **44.2 times**            |
-| 500k  | 226.61         | 22.42         | **10.1 times**            |
-| 1M    | ✗ infeasible   | 98.93         | $∞$ (CPU cannot complete) |
-| 2M    | ✗ infeasible   | 436.97        | $∞$ (CPU cannot complete) |
+| Scale | CPU Total (s), mean ± std (n) | GPU Total (s) | Speedup | 95% CI      |
+|-------|--------------------------------|----------------|---------|-------------|
+| 100K  | 51.2 ± 13.0 (n=3)              | 1.33           | **38.5 times** | 27.5×–49.6× |
+| 500K  | 224.0 ± 3.3 (n=3)              | 22.42          | **9.99 times** | 9.82×–10.16× |
+| 1M    | ✗ infeasible   | 98.93         | - | n/a (no CPU baseline) |
+| 2M    | ✗ infeasible   | 436.97        | - | n/a (no CPU baseline) |
 
 See @fig:speedup for the speedup curve.
 
 ::::{figure} figures/fig2_speedup.png
 :label: fig:speedup
-:alt: Line plot of GPU speedup over CPU baseline at 100k and 500k reads, with annotations indicating CPU infeasibility at 1M and 2M reads.
+:alt: Line plot with error bars of GPU speedup over CPU baseline at 100k and 500k reads, with a shaded 95% confidence interval and annotations indicating CPU infeasibility at 1M and 2M reads.
 
-End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN). Speedup is highest at small scale (44.2 times at 100k reads) where UMAP dominates runtime and delivers a 75 times stage speedup, then decreases at 500k (10.1×) as DBSCAN accounts for a growing share of GPU time. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
+End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN), with 95% CI error bars from 3 repeated CPU runs per scale. Speedup is highest at small scale (38.5 times at 100k reads, 95% CI 27.5–49.6 times) where UMAP dominates runtime and delivers a 75 times stage speedup, then decreases at 500k (9.99 times, 95% CI 9.82–10.16 times) as DBSCAN accounts for a growing share of GPU time. The wider 100k interval reflects CPU run-to-run variance at that scale, not GPU instability. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
 ::::
 
 ## Clustering Quality
@@ -414,14 +421,25 @@ is exhausted.
 
 ## Performance Delta: Is the Speedup Meaningful?
 
-End-to-end speedup reaches **44.2 times at 100k reads** (58.7s → 1.33s) and **10.1 times
-at 500k reads** (226.6s → 22.4s). This sub-linear decrease with scale is explained by
+End-to-end speedup reaches **38.5 times at 100k reads** (51.2s → 1.33s, 95% CI
+27.5–49.6 times, n=3 repeated CPU runs) and **9.99 times at 500k reads** (224.0s →
+22.4s, 95% CI 9.82–10.16 times, n=3). The 100k interval is wide relative to the point
+estimate — driven almost entirely by CPU run-to-run variance (36.2s–58.7s across three
+repeated runs of the same code and data) rather than by any instability on the GPU
+side, which was measured once per scale here. This is worth stating plainly as a
+limitation of the CPU baseline's stability at small scale, not of the GPU result: the
+500k interval, where CPU total time is far more reproducible run-to-run
+(220.3s–226.6s), is correspondingly tight. A logical next step to narrow the 100k
+interval further would be repeating the GPU side rather than the CPU side, since GPU
+is the leg currently contributing zero measured variance to the estimate.
+
+This sub-linear decrease with scale is explained by
 the changing composition of GPU runtime, summarized below:
 
 | Reads | End-to-end CPU | End-to-end GPU | Speedup | DBSCAN share of GPU time | DBSCAN GPU time |
 |---|---|---|---|---|---|
-| 100k | 58.7s | 1.33s | 44.2 times | 37% | 0.49s |
-| 500k | 226.6s | 22.4s | 10.1 times | 52% | 11.69s |
+| 100k | 51.2s (mean, n=3) | 1.33s | 38.5 times | 37% | 0.49s |
+| 500k | 224.0s (mean, n=3) | 22.4s | 9.99 times | 52% | 11.69s |
 | 1M | did not terminate | 99s | — | 59% | 58.15s |
 | 2M | did not terminate | 437s (7.3 min) | — | 64% | 280.49s |
 
@@ -515,7 +533,7 @@ which we did not benchmark here due to time constraints. Future work will:
 We present the first published benchmarking study of the NVIDIA DGX Spark (Grace
 Blackwell GB10) for deep-sea metagenomic read binning. Our GPU-accelerated pipeline —
 with cuML ML kernels [@rapids_cuml] orchestrated via PySpark [@zaharia2016spark] and
-Project Glow [@glow2019] — achieves **10–44× end-to-end speedup** over a
+Project Glow [@glow2019] — achieves **10–39× end-to-end speedup** over a
 scikit-learn CPU baseline with minimal code changes, while successfully processing
 feature matrices up to **400 MB (2M reads × 50 PCA components)** within the 128 GB
 unified memory budget without out-of-memory failures. Critically, the GPU pipeline
