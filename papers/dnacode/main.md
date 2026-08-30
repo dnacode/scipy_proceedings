@@ -1,7 +1,7 @@
 ---
 title: "Benchmarking Edge-Accelerated Genomics: A Pilot Study of Unified Memory Architectures in Deep-Sea Metagenomics"
 abstract: |
-  Deep-sea metagenomics involves sequencing total DNA from oceanic samples (water/sediment) to analyze microbial communities without laboratory cultivation. Large-scale deep-sea projects generate terabyte-scale datasets that often exceed the memory and bandwidth capacity of standard GPU clusters. This paper evaluates localized "edge" computing—the practice of processing data at or near the source of data generation to reduce latency and infrastructure overhead—for microbial read binning using the NVIDIA DGX Spark (Grace Blackwell GB10). We implement a GPU-accelerated pipeline utilizing PySpark 3.5, Project Glow, and RAPIDS (cuML), and benchmark it against a CPU-bound scikit-learn baseline using 4-mer frequency matrices derived from the Malaspina deep-ocean expedition dataset (NCBI BioProject PRJNA365132). Across dataset scales from 100K to 2M reads, the GPU pipeline achieves speedups of 10–44× end-to-end at overlapping 100K–500K scales, and extends to 1M–2M reads where the CPU baseline fails, with minimal code changes. GPU acceleration is provided exclusively by cuML ML kernels; Spark data loading ran on CPU at all scales. We assess hardware viability, memory behavior under the 128 GB unified address space, and discuss the capital versus operating expenditure (CAPEX/OPEX) implications of edge computing for resource-constrained marine biology labs.
+  Deep-sea metagenomics involves sequencing total DNA from oceanic samples (water/sediment) to analyze microbial communities without laboratory cultivation. Large-scale deep-sea projects generate terabyte-scale datasets that often exceed the memory and bandwidth capacity of standard GPU clusters. This paper evaluates localized "edge" computing—the practice of processing data at or near the source of data generation to reduce latency and infrastructure overhead—for microbial read binning using the NVIDIA DGX Spark (Grace Blackwell GB10). We implement a GPU-accelerated pipeline utilizing PySpark 3.5, Project Glow, and RAPIDS (cuML), and benchmark it against a CPU-bound scikit-learn baseline using 4-mer frequency matrices derived from the Malaspina deep-ocean expedition dataset (NCBI BioProject PRJNA365132). Across dataset scales from 100k to 2M reads, the GPU pipeline achieves speedups of 10–44 times end-to-end at overlapping 100k–500k scales, and extends to 1M–2M reads where the CPU baseline fails, with minimal code changes. GPU acceleration is provided exclusively by cuML ML kernels; Spark data loading ran on CPU at all scales. We assess hardware viability, memory behavior under the 128 GB unified address space, and discuss the capital versus operating expenditure (CAPEX/OPEX) implications of edge computing for resource-constrained marine biology labs.
 ---
 
 # Introduction
@@ -201,8 +201,8 @@ fails silently at 1M reads. Two failure modes were encountered:
    nearest-neighbour index, not RAM.
 
 These failures establish an **empirical CPU scalability ceiling at approximately
-500K–1M reads** for `umap-learn` on ARM64 hardware under this configuration. We
-therefore restrict CPU benchmarks to ≤500K reads and report the 1M+ range as
+500k–1M reads** for `umap-learn` on ARM64 hardware under this configuration. We
+therefore restrict CPU benchmarks to ≤500k reads and report the 1M+ range as
 "CPU-infeasible" in our results. This is itself a central finding of the study,
 motivating GPU acceleration.
 
@@ -235,11 +235,11 @@ k-mer matrices, compressing the 256-dimensional space into a denser representati
 retains primary variance structure while substantially reducing UMAP's k-NN graph
 construction cost. UMAP `n_neighbors=10` (below the default of 15) was chosen
 to favour local cluster separation [@mcinnes2018umap], which is desirable when
-distinguishing closely related microbial taxa at the read level. `init='random'` was adopted after spectral initialisation
-failed at 1M reads due to an insufficient eigengap in the pynndescent graph (see
+distinguishing closely related microbial taxa at the read level. `init='random'` was adopted after spectral initialization
+failed at 1M reads due to an insufficient eigengap in the `pynndescent` graph (see
 [CPU Baseline](#cpu-baseline)); it was then held fixed across all scales for consistency.
 
-The DBSCAN parameters (`eps=0.5`, `min_samples=10`) were set empirically on the 100K CPU
+The DBSCAN parameters (`eps=0.5`, `min_samples=10`) were set empirically on the 100k CPU
 run and held constant across all scales and both pipelines to enable direct comparison.
 They are not re-tuned to the UMAP embedding scale at each dataset size, which explains the
 divergence in recovered cluster counts across scales [@campello2013] — this is a known
@@ -251,9 +251,9 @@ CPU and GPU scales differ deliberately, reflecting the observed scalability ceil
 
 | Scale | Reads     | Matrix (post-PCA, 50D) | CPU                    | GPU |
 |-------|-----------|------------------------|------------------------|-----|
-| 100K  | 100,000   | ~20 MB                 | ✓                      | ✓   |
-| 200K  | 200,000   | ~40 MB                 | ✓                      | —   |
-| 500K  | 500,000   | ~100 MB                | ✓                      | ✓   |
+| 100k  | 100,000   | ~20 MB                 | ✓                      | ✓   |
+| 200k  | 200,000   | ~40 MB                 | ✓                      | —   |
+| 500k  | 500,000   | ~100 MB                | ✓                      | ✓   |
 | 1M    | 1,000,000 | ~200 MB                | ✗ (infeasible)         | ✓   |
 | 2M    | 2,000,000 | ~400 MB                | ✗ (infeasible)         | ✓   |
 
@@ -264,7 +264,7 @@ extension enabled by cuML's GPU-native nearest-neighbour graph construction.
 
 ## Hardware Viability: Out-of-Memory Behavior
 
-No GPU out-of-memory events were observed at any scale tested (100K–2M reads). The
+No GPU out-of-memory events were observed at any scale tested (100k–2M reads). The
 largest matrix processed — 2M reads × 50 PCA components, approximately 400 MB — occupied
 roughly 0.3% of the 128 GB unified address space; all allocations were accommodated
 without batching, tiling, or explicit memory management.
@@ -272,7 +272,7 @@ without batching, tiling, or explicit memory management.
 Peak system memory pressure, as reported by `cp.cuda.Device(0).mem_info` (which measures
 total unified pool consumption including OS, CUDA runtime, and JVM overhead — not
 algorithm data alone), reached approximately 58 GB at the 2M scale, leaving over 70 GB
-headroom. Values increased monotonically with scale (41 GB at 100K → 47 GB at 500K →
+headroom. Values increased monotonically with scale (41 GB at 100k → 47 GB at 500k →
 50 GB at 1M → 58 GB at 2M), consistent with stable system overhead and growing algorithm
 working sets. No per-kernel memory profiling was performed; these figures are reported
 as headroom indicators, not as precise algorithmic allocations.
@@ -291,9 +291,9 @@ for interpretation.
 
 | Scale | PCA (s) | UMAP (s) | DBSCAN (s) | Total (s)    |
 |-------|---------|----------|------------|--------------|
-| 100K  | 0.09    | 56.4     | 2.22       | **58.71**    |
-| 200K  | 0.15    | 69.8     | 4.88       | **74.85**    |
-| 500K  | 0.36    | 203.8    | 22.46      | **226.61**   |
+| 100k  | 0.09    | 56.4     | 2.22       | **58.71**    |
+| 200k  | 0.15    | 69.8     | 4.88       | **74.85**    |
+| 500k  | 0.36    | 203.8    | 22.46      | **226.61**   |
 | 1M    | —       | ✗ infeasible (process terminated) | — | —  |
 | 2M    | —       | ✗ infeasible | —      | —            |
 
@@ -301,8 +301,8 @@ for interpretation.
 
 | Scale | Transfer (s) | PCA (s) | UMAP (s)   | DBSCAN (s) | Total (s)    |
 |-------|-------------|---------|------------|------------|--------------|
-| 100K  | 0.17        | 0.09    | **0.75**   | 0.49       | **1.33**     |
-| 500K  | 0.54        | 0.13    | **10.61**  | 11.69      | **22.42**    |
+| 100k  | 0.17        | 0.09    | **0.75**   | 0.49       | **1.33**     |
+| 500k  | 0.54        | 0.13    | **10.61**  | 11.69      | **22.42**    |
 | 1M    | 1.12        | 0.24    | **40.55**  | 58.15      | **98.93**    |
 | 2M    | 2.10        | 0.47    | **156.02** | 280.49     | **436.97**   |
 
@@ -317,7 +317,7 @@ Per-stage wall-clock times for the CPU baseline (scikit-learn / umap-learn) and 
 
 ## End-to-End Speedup
 
-Speedup is computed as CPU total / GPU total for overlapping scales (100K and 500K),
+Speedup is computed as CPU total / GPU total for overlapping scales (100k and 500k),
 covering ML stages only (PCA + UMAP + DBSCAN); including GPU data transfer yields
 39.2× and 9.87× respectively. For 1M and 2M, CPU is infeasible; the GPU time alone
 demonstrates the absolute capability of the edge hardware at those scales.
@@ -326,8 +326,8 @@ demonstrates the absolute capability of the edge hardware at those scales.
 
 | Scale | CPU Total (s)  | GPU Total (s) | Speedup              |
 |-------|----------------|---------------|----------------------|
-| 100K  | 58.71          | 1.33          | **44.2×**            |
-| 500K  | 226.61         | 22.42         | **10.1×**            |
+| 100k  | 58.71          | 1.33          | **44.2×**            |
+| 500k  | 226.61         | 22.42         | **10.1×**            |
 | 1M    | ✗ infeasible   | 98.93         | ∞ (CPU cannot complete) |
 | 2M    | ✗ infeasible   | 436.97        | ∞ (CPU cannot complete) |
 
@@ -335,9 +335,9 @@ See @fig:speedup for the speedup curve.
 
 ::::{figure} figures/fig2_speedup.png
 :label: fig:speedup
-:alt: Line plot of GPU speedup over CPU baseline at 100K and 500K reads, with annotations indicating CPU infeasibility at 1M and 2M reads.
+:alt: Line plot of GPU speedup over CPU baseline at 100k and 500k reads, with annotations indicating CPU infeasibility at 1M and 2M reads.
 
-End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN). Speedup is highest at small scale (44.2× at 100K reads) where UMAP dominates runtime and delivers a 75× stage speedup, then decreases at 500K (10.1×) as DBSCAN accounts for a growing share of GPU time. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
+End-to-end GPU speedup over the CPU baseline (ML stages only: PCA + UMAP + DBSCAN). Speedup is highest at small scale (44.2 times at 100k reads) where UMAP dominates runtime and delivers a 75× stage speedup, then decreases at 500k (10.1×) as DBSCAN accounts for a growing share of GPU time. At 1M and 2M reads the CPU baseline cannot complete; GPU absolute times are shown for reference.
 ::::
 
 ## Clustering Quality
@@ -350,16 +350,16 @@ kernels.
 
 | Scale | Clusters | Noise % | Note                                             |
 |-------|---------|---------|--------------------------------------------------|
-| 100K  | 1       | 0.01%   | DBSCAN eps=0.5 yields single cluster at this scale |
-| 200K  | 2       | 0.01%   |                                                  |
-| 500K  | 12      | 0.02%   |                                                  |
+| 100k  | 1       | 0.01%   | DBSCAN eps=0.5 yields single cluster at this scale |
+| 200k  | 2       | 0.01%   |                                                  |
+| 500k  | 12      | 0.02%   |                                                  |
 
 **Table 5. Clustering output — GPU runs.**
 
 | Scale | Clusters | Noise % |
 |-------|---------|---------|
-| 100K  | 2       | 0.01%   |
-| 500K  | 19      | 0.03%   |
+| 100k  | 2       | 0.01%   |
+| 500k  | 19      | 0.03%   |
 | 1M    | 65      | 0.04%   |
 | 2M    | 91      | 0.01%   |
 
@@ -388,7 +388,7 @@ sample).
 # Discussion
 
 (unified-memory-discussion)=
-## Does Unified Memory Solve the Genomics OOM Problem?
+## Does Unified Memory Solve the Genomics Out of Memory (OOM) Problem?
 
 The 128 GB unified address space of the DGX Spark prevented all GPU out-of-memory
 errors across every scale tested (up to 2M reads, ~400 MB post-PCA). No batching,
@@ -396,7 +396,7 @@ tiling, or explicit memory management was required in the cuML pipeline.
 
 More revealing, however, was the CPU failure mode. The bottleneck at 1M reads was
 **not RAM** — 112 GB remained free during both crash events. The bottleneck was
-**compute time** in the CPU-bound pynndescent k-NN index construction inside
+**compute time** in the CPU-bound `pynndescent` k-NN index construction inside
 `umap-learn`. This distinction is important: unified memory solves the GPU VRAM
 ceiling, but it does not help when the algorithm itself is CPU-bound and
 single-threaded in its critical path. The cuML UMAP implementation replaces pynndescent
@@ -410,32 +410,39 @@ is exhausted.
 
 ## Performance Delta: Is the Speedup Meaningful?
 
-End-to-end speedup reaches **44.2× at 100K reads** (58.7s → 1.33s) and **10.1× at
-500K reads** (226.6s → 22.4s). This sub-linear decrease with scale is explained by the
-changing composition of GPU runtime: at 100K reads, UMAP dominates (0.75s of 1.33s
-total, 56%) and delivers a 75× stage speedup; at 500K reads, DBSCAN accounts for 52%
-of GPU time (11.69s of 22.42s total) and shows a smaller 1.92× advantage. As dataset
-scale grows, DBSCAN's share of GPU runtime increases further — 59% at 1M, 64% at 2M —
-making it the binding constraint on end-to-end throughput at large scale.
+End-to-end speedup reaches **44.2 times at 100k reads** (58.7s → 1.33s) and **10.1 times
+at 500k reads** (226.6s → 22.4s). This sub-linear decrease with scale is explained by
+the changing composition of GPU runtime, summarized below:
 
-**UMAP benefits most from GPU acceleration at every scale.** At 100K, UMAP takes 56.4s
-on CPU versus 0.75s on GPU — a **75× stage speedup**. At 500K, UMAP takes 203.8s vs
-10.6s — a **19.2× stage speedup**. The decrease in UMAP speedup from 100K to 500K is
+| Reads | End-to-end CPU | End-to-end GPU | Speedup | DBSCAN share of GPU time | DBSCAN GPU time |
+|---|---|---|---|---|---|
+| 100k | 58.7s | 1.33s | 44.2 times | 37% | 0.49s |
+| 500k | 226.6s | 22.4s | 10.1 times | 52% | 11.69s |
+| 1M | did not terminate | 99s | — | 59% | 58.15s |
+| 2M | did not terminate | 437s (7.3 min) | — | 64% | 280.49s |
+
+At 100k reads, UMAP dominates GPU runtime (0.75s of 1.33s total, 56%) and delivers a
+75-times stage speedup. As dataset scale grows, DBSCAN's share of GPU runtime increases
+steadily, making it the binding constraint on end-to-end throughput at large scale.
+
+**UMAP benefits most from GPU acceleration at every scale.** At 100k, UMAP takes 56.4s
+on CPU versus 0.75s on GPU — a **75 times stage speedup**. At 500k, UMAP takes 203.8s vs
+10.6s — a **19.2 times stage speedup**. The decrease in UMAP speedup from 100k to 500k is
 substantial: the GPU's cuVS k-NN kernel achieves its largest relative advantage where
-the CPU pynndescent index dominates wall time absolutely.
+the CPU `pynndescent` index dominates wall time absolutely.
 
-**DBSCAN is GPU-accelerated at all scales.** At 100K, cuML DBSCAN takes 0.49s versus
-sklearn's 2.22s — a **4.5× GPU advantage**. At 500K the advantage narrows to 1.92×
-(11.69s GPU vs 22.46s CPU). The narrowing reflects cuML DBSCAN's less favourable
-scaling exponent relative to sklearn's BallTree at these matrix densities: GPU DBSCAN
-time grows roughly quadratically with n (0.49s → 11.69s → 58.15s → 280.49s for 100K →
-500K → 1M → 2M), consistent with the expected O(n²) worst case.
+**DBSCAN is GPU-accelerated at all scales.** At 100k, cuML DBSCAN takes 0.49s versus
+sklearn's 2.22s — a **4.5 times GPU advantage**. At 500k the advantage narrows to
+**1.92 times** (11.69s GPU vs 22.46s CPU). The narrowing reflects cuML DBSCAN's less
+favourable scaling exponent relative to sklearn's BallTree at these matrix densities:
+GPU DBSCAN time grows roughly quadratically with n (0.49s → 11.69s → 58.15s → 280.49s
+for 100k → 500k → 1M → 2M), consistent with the expected O(n²) worst case.
 
 **At 1M reads,** the GPU pipeline completes in **99s** — a task the CPU cannot complete.
 At **2M reads**, GPU completes in **437s** (7.3 minutes). For a researcher processing
-10 samples at 2M reads each, this translates to ~73 minutes on the DGX Spark, versus
-an open-ended wait on the CPU baseline where the k-NN graph construction does not
-terminate within practical time bounds at this scale.
+10 samples at 2M reads each, this translates to approximately 73 minutes on the DGX
+Spark, versus an open-ended wait on the CPU baseline, where the k-NN graph construction
+does not terminate within practical time bounds at this scale.
 
 ## Zero-Code-Change Acceleration: Does It Hold?
 
@@ -463,8 +470,8 @@ this repeated cost for iterative analysis.
 
 **CAPEX vs. OPEX.** The DGX Spark used in this study was acquired for $4,300 USD — a
 one-time capital expenditure. Actual benchmark compute across all scales totaled
-approximately 15 minutes: ~6 minutes for CPU runs (100K–500K), ~3 minutes for GPU runs
-(100K–500K–1M), and ~6 minutes for the GPU 2M run. The full
+approximately 15 minutes: ~6 minutes for CPU runs (100k–500k), ~3 minutes for GPU runs
+(100k–500k–1M), and ~6 minutes for the GPU 2M run. The full
 analysis session — including environment setup, JAR dependency resolution, pipeline
 development, and UMAP crash debugging — ran approximately 7–8 hours. On a mid-range
 cloud GPU instance (AWS g5.2xlarge, A10G 24 GB VRAM, $1.21/hr), that session costs
