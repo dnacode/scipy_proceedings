@@ -382,7 +382,7 @@ sample).
 :label: fig:umap
 :alt: Two-panel UMAP scatter of 2M deep-ocean metagenomic reads: left panel shows all 91 DBSCAN bins with a continuous colormap; right panel highlights the top 20 bins by read count with discrete colours and a per-bin read-count legend.
 
-**Left:** 2D UMAP embedding of 2M Malaspina deep-ocean reads (cuML UMAP, n_neighbors=10, min_dist=0.1) coloured across all 91 DBSCAN genomic bins (eps=0.5, min_samples=10) using a continuous `nipy_spectral` colormap. Distinct cluster islands confirm that the GB10 unified memory architecture sustains full-resolution binning at this scale without out-of-memory failures. **Right:** Top 20 bins by read count shown with discrete `tab20` colours; the remaining 71 minor bins are rendered in silver and noise points in light grey. The legend reports read counts per dominant bin, highlighting which putative taxa are most abundant in this deep Mediterranean water column sample. The 91 bins recovered at 2M reads are consistent with the high microbial diversity expected in deep pelagic environments.
+**Left:** 2D UMAP embedding of 2M Malaspina deep-ocean reads (cuML UMAP, n_neighbors=10, min_dist=0.1) coloured across all 91 DBSCAN genomic bins (eps=0.5, min_samples=10) using a continuous `nipy_spectral` colormap. Distinct cluster islands confirm that the GB10 unified memory architecture sustains full-resolution binning at this scale without out-of-memory failures. **Right:** Top 20 bins by read count shown with discrete `tab20` colours; the remaining 71 minor bins are rendered in silver and noise points in light grey. The legend reports read counts per dominant bin, highlighting which putative taxa are most abundant in this deep Mediterranean water column sample.
 ::::
 
 # Discussion
