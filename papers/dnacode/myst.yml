@@ -63,6 +63,12 @@ project:
         - sklearn1
         - dagster
         - sra_toolkit
+        - glow2019
+        - nvidia_dgx_spark_hardware
+        - nvidia_hotchips_2025
+        - servethehome_gb10
+        - arm_developer_dgx_spark
+        - nvidia_dgx_spark_product
 
 exports:
   - id: pdf
