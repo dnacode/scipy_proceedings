@@ -60,7 +60,7 @@ to our knowledge, no prior work benchmarks the platform for metagenomic read bin
 
 NVIDIA Grace Blackwell (GB10) integrates ARM CPU cores and a Blackwell GPU die on a
 single package, connected by NVLink-C2C at approximately 600 GB/s aggregate bandwidth
-[@nvidia_hotchips_2025; @servethehome_gb10] — roughly 5 times that of PCIe 5.0 x16. 
+[@nvidia_hotchips_2025; @servethehome_gb10] — roughly 5 times that of PCIe 5.0 x16.
 The 128 GB LPDDR5X pool itself delivers ~273 GB/s of memory bandwidth [@nvidia_dgx_spark_hardware],
 which is the effective bottleneck for memory-bound kernels. More critically, the architecture exposes
 a single coherent address space: any pointer valid on the CPU is valid on the GPU without an explicit copy.
