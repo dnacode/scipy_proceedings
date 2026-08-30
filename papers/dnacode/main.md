@@ -189,13 +189,13 @@ measured with `tracemalloc`.
 fails silently at 1M reads. Two failure modes were encountered:
 
 1. *Spectral initialisation failure* (first attempt, `init='spectral'`, `n_neighbors=15`):
-   the eigenvector solver in pynndescent reported an insufficient eigengap and aborted
+   the eigenvector solver in `pynndescent` reported an insufficient eigengap and aborted
    with the message: *"Spectral initialisation failed — eigenvector solver failed.
    Falling back to random initialisation."* The process then terminated without
    producing output.
 
 2. *Silent process death* (second attempt, `init='random'`, `n_neighbors=10`,
-   `n_epochs=500`): The pynndescent k-NN graph construction for a 1M × 50 matrix
+   `n_epochs=500`): The `pynndescent` k-NN graph construction for a 1M × 50 matrix
    consumed unbounded time and was terminated by the OS scheduler. System memory was
    not exhausted (112 GB available); the bottleneck was compute time in the approximate
    nearest-neighbour index, not RAM.
@@ -277,7 +277,7 @@ headroom. Values increased monotonically with scale (41 GB at 100k → 47 GB at 
 working sets. No per-kernel memory profiling was performed; these figures are reported
 as headroom indicators, not as precise algorithmic allocations.
 
-The critical OOM-adjacent finding was on the **CPU side**: at 1M reads the pynndescent
+The critical OOM-adjacent finding was on the **CPU side**: at 1M reads the `pynndescent`
 k-NN graph construction inside `umap-learn` terminated the process — not due to memory
 exhaustion (112 GB remained free) but due to compute time. See the [CPU Baseline
 section](#cpu-baseline) for the full failure log and the [discussion](#unified-memory-discussion)
@@ -399,7 +399,7 @@ More revealing, however, was the CPU failure mode. The bottleneck at 1M reads wa
 **compute time** in the CPU-bound `pynndescent` k-NN index construction inside
 `umap-learn`. This distinction is important: unified memory solves the GPU VRAM
 ceiling, but it does not help when the algorithm itself is CPU-bound and
-single-threaded in its critical path. The cuML UMAP implementation replaces pynndescent
+single-threaded in its critical path. The cuML UMAP implementation replaces `pynndescent`
 entirely with a GPU-native k-NN kernel (cuVS / FAISS-GPU), which is why it extends to
 2M reads where the CPU implementation cannot proceed at 1M.
 
@@ -488,7 +488,7 @@ speed: the DGX Spark requires no spin-up latency, no data transfer to ephemeral 
 and no egress fees on results — frictions that compound across every debugging cycle and
 re-run.
 
-**Accessibility.** A self-contained appliance running a Python venv requires no cloud
+**Accessibility.** A self-contained appliance running a Python `venv` requires no cloud
 DevOps expertise. A graduate student can provision the full RAPIDS + PySpark stack in
 under an hour (excluding environment dependency resolution). This directly addresses the
 staffing constraints of smaller academic labs.
