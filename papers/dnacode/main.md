@@ -337,10 +337,10 @@ reported alongside the point estimate.
 
 | Scale | CPU Total (s), mean ± std (n) | GPU Total (s) | Speedup | 95% CI      |
 |-------|--------------------------------|----------------|---------|-------------|
-| 100K  | 51.2 ± 13.0 (n=3)              | 1.33           | **38.5 times** | 27.5×–49.6× |
-| 500K  | 224.0 ± 3.3 (n=3)              | 22.42          | **9.99 times** | 9.82×–10.16× |
-| 1M    | ✗ infeasible   | 98.93         | - | n/a (no CPU baseline) |
-| 2M    | ✗ infeasible   | 436.97        | - | n/a (no CPU baseline) |
+| 100K  | 51.2 ± 13.0 (n=3)              | 1.33           | **38.5 times** | 27.5–49.6 times |
+| 500K  | 224.0 ± 3.3 (n=3)              | 22.42          | **9.99 times** | 9.82–10.16 times |
+| 1M    | ✗ infeasible   | 98.93         | — | n/a (no CPU baseline) |
+| 2M    | ✗ infeasible   | 436.97        | — | n/a (no CPU baseline) |
 
 See @fig:speedup for the speedup curve.
 
@@ -438,8 +438,8 @@ the changing composition of GPU runtime, summarized below:
 
 | Reads | End-to-end CPU | End-to-end GPU | Speedup | DBSCAN share of GPU time | DBSCAN GPU time |
 |---|---|---|---|---|---|
-| 100k | 49.0s on CPU (mean, n=3) | 1.33s | 38.5 times | 37% | 0.49s |
-| 500k | 203.8s (mean, n=3) | 22.4s | 9.99 times | 52% | 11.69s |
+| 100k | 51.2s (mean, n=3) | 1.33s | 38.5 times | 37% | 0.49s |
+| 500k | 224.0s (mean, n=3) | 22.4s | 9.99 times | 52% | 11.69s |
 | 1M | did not terminate | 99s | — | 59% | 58.15s |
 | 2M | did not terminate | 437s (7.3 min) | — | 64% | 280.49s |
 
@@ -447,11 +447,8 @@ At 100k reads, UMAP dominates GPU runtime (0.75s of 1.33s total, 56%) and delive
 65.4 times stage speedup. As dataset scale grows, DBSCAN's share of GPU runtime increases
 steadily, making it the binding constraint on end-to-end throughput at large scale.
 
-**UMAP benefits most from GPU acceleration at every scale.** At 100k, UMAP takes 56.4s
-on CPU versus 0.75s on GPU — a **75 times stage speedup**. At 500k, UMAP takes 203.8s vs
-10.6s — a **19 times stage speedup**. The decrease in UMAP speedup from 100k to 500k is
-substantial: the GPU's cuVS k-NN kernel achieves its largest relative advantage where
-the CPU `pynndescent` index dominates wall time absolutely.
+**UMAP benefits most from GPU acceleration at every scale.** At 100k, UMAP takes 49.0s on CPU (mean, n=3) versus 0.75s on GPU — a **65.4 times stage speedup**. At 500k, UMAP takes 201.3s (mean, n=3) vs 10.6s — a **19.0 times stage speedup**.
+The decrease in UMAP speedup from 100k to 500k is substantial: the GPU's cuVS k-NN kernel achieves its largest relative advantage where the CPU `pynndescent` index dominates wall time absolutely.
 
 **DBSCAN is GPU-accelerated at all scales.** At 100k, cuML DBSCAN takes 0.49s versus
 sklearn's 2.14s (mean, n=3) — a **4.3 times GPU advantage**. At 500k the advantage narrows to
